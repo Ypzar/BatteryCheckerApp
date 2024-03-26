@@ -1,0 +1,358 @@
+// // // import React, { useState, useEffect } from "react";
+// // // import { StatusBar } from "expo-status-bar";
+// // // import { StyleSheet, Text, View } from "react-native";
+// // // import * as Battery from "expo-battery";
+
+// // // export default function BatteryCheckerApp() {
+// // //   const [batteryLevel, setBatteryLevel] = useState(null);
+// // //   const [chargingStatus, setChargingStatus] = useState(null);
+// // //   const [batteryHealth, setBatteryHealth] = useState(null);
+// // //   const [chargingSpeed, setChargingSpeed] = useState(null);
+// // //   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(null);
+
+// // //   useEffect(() => {
+// // //     fetchBatteryInfo();
+// // //     Battery.addBatteryLevelListener(({ batteryLevel }) => {
+// // //       setBatteryLevel(batteryLevel);
+// // //     });
+// // //     Battery.getBatteryLevelAsync().then((batteryLevel) => {
+// // //       setBatteryLevel(batteryLevel);
+// // //     });
+// // //     Battery.addBatteryStateListener(({ batteryState }) => {
+// // //       setChargingStatus(batteryState);
+// // //     });
+// // //     Battery.getBatteryStateAsync().then(({ batteryState }) => {
+// // //       setChargingStatus(batteryState);
+// // //     });
+// // //     Battery.getBatteryHealthAsync().then(({ health }) => {
+// // //       setBatteryHealth(health);
+// // //     });
+// // //     Battery.getChargingSpeedAsync().then(({ chargingSpeed }) => {
+// // //       setChargingSpeed(chargingSpeed);
+// // //     });
+// // //     Battery.isLowPowerModeEnabledAsync().then((isLowPowerModeEnabled) => {
+// // //       if (isLowPowerModeEnabled) {
+// // //         // Send low battery notification
+// // //         console.log("Low battery notification sent.");
+// // //       }
+// // //     });
+// // //     return () => {
+// // //       Battery.removeAllBatteryLevelListeners();
+// // //       Battery.removeAllBatteryStateListeners();
+// // //     };
+// // //   }, []);
+
+// // //   const fetchBatteryInfo = async () => {
+// // //     try {
+// // //       const batteryInfo = await Battery.getBatteryInfoAsync();
+// // //       const remainingTime = batteryInfo.isCharging
+// // //         ? batteryInfo.chargingTimeRemaining
+// // //         : batteryInfo.dischargingTimeRemaining;
+// // //       setEstimatedTimeRemaining(remainingTime);
+// // //     } catch (error) {
+// // //       console.error("Error fetching battery info:", error);
+// // //     }
+// // //   };
+
+// // //   return (
+// // //     <View className="flex-1 p-4 bg-gray-100">
+// // //       <Text className="text-xl font-bold mb-4">Battery Status</Text>
+// // //       <View className="bg-white p-4 rounded-lg mb-4">
+// // //         <Text className="text-lg">Battery Level: {batteryLevel * 100}%</Text>
+// // //         <Text className="text-lg">Charging Status: {chargingStatus}</Text>
+// // //       </View>
+// // //       <Text className="text-xl font-bold mb-4">Battery Health</Text>
+// // //       <View className="bg-white p-4 rounded-lg mb-4">
+// // //         <Text className="text-lg">Overall Health: {batteryHealth}</Text>
+// // //       </View>
+// // //       <Text className="text-xl font-bold mb-4">Charging Speed</Text>
+// // //       <View className="bg-white p-4 rounded-lg mb-4">
+// // //         <Text className="text-lg">Charging Speed: {chargingSpeed}</Text>
+// // //       </View>
+// // //       <Text className="text-xl font-bold mb-4">Estimated Time Remaining</Text>
+// // //       <View className="bg-white p-4 rounded-lg mb-4">
+// // //         <Text className="text-lg">
+// // //           Time Remaining: {estimatedTimeRemaining} minutes
+// // //         </Text>
+// // //       </View>
+// // //     </View>
+// // //   );
+// // // }
+
+// import React, { useEffect, useState } from "react";
+// import {
+//   View,
+//   Text,
+//   Switch,
+//   StyleSheet,
+//   SafeAreaView,
+//   Animated,
+// } from "react-native";
+// import * as Battery from "expo-battery";
+// import { FontAwesome } from "@expo/vector-icons";
+// // import { useBattery } from "react-use";
+
+// export default function BatteryStatus() {
+//   const [batteryLevel, setBatteryLevel] = useState(null);
+//   const [batteryState, setBatteryState] = useState(null);
+//   // const [batteryHealth, setBatteryHealth] = useState(null);
+//   const [chargingSpeed, setChargingSpeed] = useState(null);
+//   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(null);
+//   const [lowBatteryAlert, setLowBatteryAlert] = useState(false);
+//   const [fullChargeAlert, setFullChargeAlert] = useState(false);
+//   const [animation] = useState(new Animated.Value(0));
+
+//   const batteryIndicatorHeight = batteryLevel ? (batteryLevel / 100) * 200 : 0;
+//   const [batteryStrokes, setBatteryStrokes] = useState(Array(5).fill(true));
+//   const [visible, setVisible] = useState(true);
+
+//   let currentStroke = 4;
+
+//   // const batteryState = useBattery();
+
+//   useEffect(() => {
+//     let timer = null;
+
+//     if (batteryState.charging) {
+//       setBatteryStrokes(Array(5).fill(false));
+
+//       timer = initChargingSequence();
+//     } else {
+//       calculateBatteryStrokes(batteryState.level);
+//     }
+
+//     return () => {
+//       if (timer) clearInterval(timer);
+//     };
+//   }, [batteryState]);
+
+//   const initChargingSequence = () =>
+//     setInterval(() => {
+//       if (currentStroke < 0) {
+//         currentStroke = 4;
+//         setBatteryStrokes(Array(5).fill(false));
+//         return;
+//       }
+
+//       setBatteryStrokes((strokes) =>
+//         strokes.map((stroke, idx) => (idx === currentStroke ? true : stroke))
+//       );
+
+//       currentStroke--;
+//     }, 1000);
+
+//   const calculateBatteryStrokes = (level) => {
+//     const batteryPercent = level * 100;
+
+//     let totalStrokesCount = Math.ceil((batteryPercent * 5) / 100) - 1;
+
+//     setBatteryStrokes(
+//       Array(5)
+//         .fill(true)
+//         .map((d, i) => (i <= totalStrokesCount ? true : false))
+//         .reverse()
+//     );
+//   };
+
+//   if (!batteryState.isSupported) {
+//     return <Text>Fetching sensor not supported</Text>;
+//   }
+
+//   if (!batteryState.fetched) {
+//     return <Text>Fetching Battery status, please wait...</Text>;
+//   }
+
+//   let batteryPercent = Math.round(batteryState.level * 100);
+//   let batteryStatusClass = batteryState.charging
+//     ? "battery-charging"
+//     : batteryState.level * 100 > 20
+//     ? "battery-full"
+//     : "battery-empty";
+
+//   useEffect(() => {
+//     const getBatteryInfo = async () => {
+//       try {
+//         console.log("Battery Object:", Battery);
+
+//         const batteryInfo = await Battery.getBatteryLevelAsync();
+//         setBatteryLevel(batteryInfo.toFixed(2));
+
+//         const batteryStateInfo = await Battery.getBatteryStateAsync();
+//         setBatteryState(batteryStateInfo);
+
+//         // const batteryHealthInfo = await Battery.getBatteryHealthAsync();
+//         // setBatteryHealth(batteryHealthInfo);
+
+//         // const chargingSpeedInfo = await Battery.getChargingSpeedAsync();
+//         // setChargingSpeed(chargingSpeedInfo);
+
+//         Battery.addLowPowerModeListener(({ lowPowerMode }) => {
+//           setLowBatteryAlert(lowPowerMode);
+//         });
+
+//         const estimatedTimeRemainingInfo =
+//           await Battery.getEstimatedTimeRemainingAsync();
+//         setEstimatedTimeRemaining(estimatedTimeRemainingInfo);
+
+//         if (batteryState === Battery.BatteryState.CHARGING) {
+//           Animated.loop(
+//             Animated.timing(animation, {
+//               toValue: 1,
+//               duration: 800,
+//               useNativeDriver: true,
+//               delay: 0,
+//             })
+//           ).start();
+//         } else {
+//           // Stop the animation if not charging
+//           animation.setValue(0);
+//         }
+//       } catch (error) {
+//         console.error("Error getting battery information:", error);
+//       }
+//     };
+
+//     getBatteryInfo();
+
+//     const batteryListener = Battery.addBatteryLevelListener(
+//       ({ batteryLevel }) => {
+//         setBatteryLevel(batteryLevel.toFixed(2));
+//       }
+//     );
+
+//     const batteryStateListener = Battery.addBatteryStateListener(
+//       ({ batteryState }) => {
+//         setBatteryState(batteryState);
+//       }
+//     );
+
+//     const lowBatteryListener = Battery.addLowPowerModeListener(
+//       ({ lowPowerMode }) => {
+//         setLowBatteryAlert(lowPowerMode);
+//       }
+//     );
+
+//     // const fullChargeListener = Battery.addFullPowerModeListener(
+//     //   ({ fullPowerMode }) => {
+//     //     setFullChargeAlert(fullPowerMode);
+//     //   }
+//     // );
+
+//     return () => {
+//       batteryListener.remove();
+//       batteryStateListener.remove();
+//       lowBatteryListener.remove();
+//       // fullChargeListener.remove();
+//       // Battery.removeAllBatteryStateListeners();
+//     };
+//   }, []);
+
+//   return (
+//     <SafeAreaView className="flex-row justify-center items-center">
+//       <View className="flex-1 justify-center">
+//         <Text className="text-lg font-bold">BATTERY STATUS</Text>
+//       </View>
+//       <View style={styles.batteryContainer}>
+//         {batteryStatusClass}
+//         <View style={styles.batteryOuter}>
+//           {batteryStrokes.map((stroke, idx) => {
+//             <BatteryStroke key={idx} visible={stroke} />;
+//           })}
+//           <View style={styles.batteryIndicator} />
+//           {/* <Text style={styles.batteryInner}></Text>
+//           <Text style={styles.batteryInner}></Text>
+//           <Text style={styles.batteryInner}></Text>
+//           <Text style={styles.batteryInner}></Text>
+//           <Text style={styles.batteryInner}></Text> */}
+//           <Animated.View
+//             style={[styles.batteryChargingIndicator, { opacity: animation }]}
+//           >
+//             <FontAwesome name="bolt" size={50} color={"#cbd71d"} />
+//           </Animated.View>
+//         </View>
+//       </View>
+
+//       <Text className="text-lg font-bold">
+//         Battery Level: {batteryPercent}%
+//       </Text>
+//       <Text className="text-lg">
+//         Charging Status:{" "}
+//         {batteryState === Battery.BatteryState.CHARGING
+//           ? "Charging"
+//           : "Not Charging"}
+//       </Text>
+//       {/* <Text className="text-lg">Battery Health: {batteryHealth}</Text> */}
+//       <Text className="text-lg">Charging Speed: {chargingSpeed}</Text>
+//       {estimatedTimeRemaining && (
+//         <Text className="text-lg">
+//           Estimated Time Remaining: {estimatedTimeRemaining.toFixed(2)} minutes
+//         </Text>
+//       )}
+//       <View className="flex-row items-center justify-between mt-4">
+//         <Text className="text-lg">Low Battery Alert: </Text>
+//         <Switch value={lowBatteryAlert} onValueChange={setLowBatteryAlert} />
+//       </View>
+//       <View className="flex-row items-center justify-between mt-4">
+//         <Text className="text-lg">Full Charge Alert: </Text>
+//         <Switch value={fullChargeAlert} onValueChange={setFullChargeAlert} />
+//       </View>
+//       {visible && (
+//         <View
+//           style={[`battery-inner flex-fill`, visible ? `visible` : `invisible`]}
+//         ></View>
+//       )}
+//     </SafeAreaView>
+//   );
+// }
+
+// const BatteryStroke = ({ visible }) => (
+//   <Text
+//     className={`battery-inner flex-fill ${visible ? "visible" : "invisible"}`}
+//   ></Text>
+// );
+
+// const styles = StyleSheet.create({
+//   batteryContainer: {
+//     flex: 1,
+//     flexDirection: "column",
+//     marginBottom: 3,
+//     marginTop: 5,
+//     width: "100%",
+//     alignItems: "center",
+//     justifyContent: "center",
+//   },
+//   batteryOuter: {
+//     position: "relative",
+//     height: 210,
+//     width: 100,
+//     borderColor: "#222",
+//     borderWidth: 2,
+//     borderStyle: "solid",
+//     padding: 4,
+//     borderRadius: 7,
+//     flexDirection: "column",
+//     justifyContent: "center",
+//   },
+//   batteryInner: {
+//     flex: 1,
+//     width: "100%",
+//     marginVertical: 2,
+//     marginHorizontal: 0,
+//     backgroundColor: "#01770a",
+//   },
+//   batteryIndicator: {
+//     position: "absolute",
+//     top: -8,
+//     width: 24,
+//     height: 8,
+//     backgroundColor: "#222",
+//     left: "42%",
+//     borderRadius: 4,
+//     zIndex: 1,
+//   },
+//   batteryChargingIndicator: {
+//     position: "absolute",
+//     top: "40%",
+//     left: "45%",
+//   },
+// });

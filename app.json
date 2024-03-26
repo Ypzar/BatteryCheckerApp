@@ -21,10 +21,17 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.tianhao123.batteryCheckerApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "owner": "yzzz",
+    "extra": {
+      "eas": {
+        "projectId": "2ee6f6d8-1c99-45bd-8366-0589f27afc72"
+      }
     }
   }
 }
